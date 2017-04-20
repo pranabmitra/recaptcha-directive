@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Recaptcha</title>
+
+        <!-- Bootstrap is just here to make the demo look better -->
+        <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Include AngularJS -->
+        <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+
+        <script>
+            var app = angular.module('recaptchaApp', []);
+            app.controller('RecaptchaController', function ($scope) {
+                $scope.sitekey = '6LfzrB0UAAAAAMpeWuu2y4wa5bveoNvNUOMEK_qf';
+                $scope.$watch('recaptchaResponse', function (response) {
+                  console.log(response);
+                });
+            });
+
+            app.directive('recaptcha', function ($window, $document) {
+                return {
+                  restrict: 'E',
+                  scope: {
+                    ngModel: '=',
+                    sitekey: '@',
+                  },
+                  link: function linkFunc(scope, element, attrs) {
+                    var script,
+                        correctCaptcha,
+                        widgetId;
+
+                    function loadDynamicScript() {
+                        script = $window.document.createElement('script');
+                        script.async = true;
+                        script.defer = true;
+                        script.src = 'https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit';
+                        $document.find('body').append(script);
+                    }
+
+                    correctCaptcha = function(response) {
+                        // console.log(response);
+                        scope.$apply(function() {
+                            scope.ngModel = response;
+                        });
+                    };
+
+                    // This callback needs to be bind to the window object
+                    $window.onloadCallback = function onloadCallback() {
+                      // console.log('I am loaded...');
+                      widgetId = grecaptcha.render(element[0], {
+                        'sitekey' : scope.sitekey,
+                        'callback' : correctCaptcha,
+                      });
+                    }
+
+                    /* initialization */
+                    loadDynamicScript();
+                  },
+                }
+            });
+        </script>
+    </head>
+    <body>
+    <div class="container" ng-app="recaptchaApp" ng-controller="RecaptchaController">
+
+        <h1>ReCaptcha</h1>
+        <div>This is from our custom directive.</div>
+        <hr />
+        <recaptcha ng-model="recaptchaResponse" sitekey="{{sitekey}}"></recaptcha>
+        <hr />
+
+        <code ng-cloak>
+          {{ recaptchaResponse }}
+        </code>
+        <div class="g-recaptcha" data-sitekey="{{sitekey}}"></div>
+    </div>
+    </body>
+</html>
